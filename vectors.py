@@ -1,6 +1,6 @@
 """
 Electromagnetic subject:  Vector summation
-Author: Farah Khaldi
+Author: Farah M Khaldi
 ...
 """
 
