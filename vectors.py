@@ -1,70 +1,101 @@
 """
-Electromagnetic subject:  Vector summation
+Electromagnetic subject: Multi-Vector Summation (Textbook Style)
 Author: Farah M Khaldi
-...
 """
+import matplotlib
+matplotlib.use('WebAgg') 
 
 import numpy as np
-import matplotlib.pyplot as plt    
-# --- (main) ---
-if __name__ == "__main__" :
-    # Laws
-    print("ELECTROMAGNETICS: VECTOR SUMMATION")
-    print("Laws:")
-    print(" Summation: R = A + B = (Ax+Bx)i + (Ay+By)j + (Az+Bz)k")
-    print(" Magnitude: |R| = sqrt(Rx² + Ry² + Rz²)")
-# --- function of vector corordinates ---
-    def get_vec_coords(vec_id):
-        print(f"\n [+500] Input Phase: {vec_id}")
-        try:
-                ac_x = float(input(f"  Enter {vec_id}_x: "))
-                ac_y = float(input(f"  Enter {vec_id}_y: "))
-                ac_z = float(input(f"  Enter {vec_id}_z: "))
-                return np.array([ac_x, ac_y, ac_z])
+import matplotlib.pyplot as plt
+
+def smart_input(prompt):
+    try:
+        val = input(prompt).strip()
+        return float(val) if val else 0.0
+    except ValueError:
+        return 0.0
+
+def launch_academic_simulator():
+    print("\n" + "═"*60)
+    print("   FARAH KHALDI - VECTOR PRESENTATION TOOL (SLIDE STYLE)")
+    print("═"*60)
+
+    raw_n = input("  How many vectors to simulate? (Default 0): ").strip()
+    n = int(raw_n) if raw_n.isdigit() else 0
+
+    if n == 0:
+        print("  [!] No vectors to display.")
+        return
+
+    vectors = []
+    for i in range(n):
+        print(f"\n  [+] Vector {chr(65+i)} Configuration:")
+        x = smart_input(f"    x-comp: ")
+        y = smart_input(f"    y-comp: ")
+        z = smart_input(f"    z-comp: ")
+        vectors.append(np.array([x, y, z]))
+
+    fig = plt.figure(figsize=(12, 9))
+    ax = fig.add_subplot(111, projection='3d')
+    
+    # --- تنظيف الرسمة (إخفاء المكعب والشبكة) ---
+    ax.set_axis_off() # إخفاء الصندوق تماماً
+    ax.set_facecolor('white')
+
+    # --- رسم المحاور "شغل سلايدات" (Central Axes) ---
+    # نحدد طول المحاور بناءً على أكبر متجه
+    all_coords = np.cumsum(vectors, axis=0)
+    axis_len = max(np.max(np.abs(all_coords)), 5) + 2
+    
+    # محور X (أحمر خفيف أو أسود)
+    ax.quiver(0, 0, 0, axis_len, 0, 0, color='black', lw=1, arrow_length_ratio=0.05)
+    ax.text(axis_len, 0, 0, " X", fontsize=12, fontweight='bold')
+    
+    # محور Y
+    ax.quiver(0, 0, 0, 0, axis_len, 0, color='black', lw=1, arrow_length_ratio=0.05)
+    ax.text(0, axis_len, 0, " Y", fontsize=12, fontweight='bold')
+    
+    # محور Z
+    ax.quiver(0, 0, 0, 0, 0, axis_len, color='black', lw=1, arrow_length_ratio=0.05)
+    ax.text(0, 0, axis_len, " Z", fontsize=12, fontweight='bold')
+
+    # --- رسم المتجهات ---
+    curr = np.array([0.0, 0.0, 0.0])
+    colors = plt.cm.Set1(np.linspace(0, 1, n))
+    
+    analysis_text = "  SYSTEM RESULTS\n" + "─"*20 + "\n"
+
+    for i, v in enumerate(vectors):
+        # رسم المتجه الأساسي
+        ax.quiver(curr[0], curr[1], curr[2], v[0], v[1], v[2], 
+                  color=colors[i], lw=3.5, arrow_length_ratio=0.1)
         
-        except ValueError:
-                print("sorry invalid please return with numeric val")
-                return get_vec_coords(vec_id)
-    # Getting vectors A and B 
-    A = get_vec_coords("vec_A")
-    B = get_vec_coords("vec_B")
+        # إضافة اسم المتجه عند رأسه
+        ax.text(curr[0]+v[0], curr[1]+v[1], curr[2]+v[2], f"  {chr(65+i)}", 
+                color=colors[i], fontweight='bold')
+        
+        mag = np.linalg.norm(v)
+        analysis_text += f"  {chr(65+i)}: Mag = {mag:.2f}\n"
+        curr += v
 
-    # calculation
-    res = A + B 
-    mag = np.linalg.norm(res)
+    # --- رسم المحصلة النهائية (النتيجة) ---
+    if n > 1:
+        ax.quiver(0, 0, 0, curr[0], curr[1], curr[2], 
+                  color='blue', lw=2, linestyle='--', arrow_length_ratio=0.1)
+        ax.text(curr[0], curr[1], curr[2], "  (R)", color='blue', fontweight='bold')
 
-    # Printing the analysis
-    print("\n" + "*"*20 + " Analaysis " + "*"*20)
-    print(f"Vector A      : {A}")
-    print(f"Vector B      : {B}")
-    print(f"Result : {res}")
-    print(f"Magnitude : {mag:.3f}")
-    print("*"*50)
+    # لوحة المعلومات
+    analysis_text += "─"*20 + f"\n  Total R: {curr}\n  Mag(R): {np.linalg.norm(curr):.2f}"
+    plt.figtext(0.02, 0.4, analysis_text, fontsize=10, fontfamily='monospace', 
+                bbox=dict(facecolor='white', edgecolor='lightgray', boxstyle='round'))
+
+    plt.suptitle(f"EM Engineering Simulator - {n} Vector Interaction", fontsize=15)
     
-    # --- Vector drawing ---
-    fig = plt.figure(figsize=(10, 10))
-    ac = fig.add_subplot(111, projection='3d')
-
-    # Drawing Vector A 
-    ac.quiver(0,0,0, A[0], A[1], A[2], color='Black', 
-              label='Vector A', arrow_length_ratio=0.4, linewidth=3)
+    # تثبيت زاوية الرؤية لتكون مشابهة للسلايدات
+    ax.view_init(elev=20, azim=30)
     
-    # Drawing Vector B
-    ac.quiver(A[0], A[1], A[2], B[0], B[1], B[2], color='#2ecc71', 
-              label='Vector B', arrow_length_ratio=0.4, linewidth=3)
-
-    # Drawing the Result
-    ac.quiver(0,0,0, res[0], res[1], res[2], 
-              color='#e74c3c', label='Resultant R', linestyle='--', linewidth=3)
-
-    # Graph
-    ac.set_title("Vector Addition (Head-to-Tail Rule)", fontsize=14)
-    ac.set_xlabel('X Axis'); ac.set_ylabel('Y Axis'); ac.set_zlabel('Z Axis')
-
-   # Setting limits dynamically
-    limit = max(np.abs(np.concatenate([A, B, res]))) + 1 
-    ac.set_xlim([-limit, limit]); ac.set_ylim([-limit, limit]); ac.set_zlim([-limit, limit]) 
-    ac.legend()
-    plt.grid(True)
-    print("Plot")
+    print("\n[✔] Presentation Mode Active. Check your browser.")
     plt.show()
+
+if __name__ == "__main__":
+    launch_academic_simulator()
